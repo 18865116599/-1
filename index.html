@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>豆包聊天机器人</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            gap: 20px;
+        }
+        
+        .chat-section {
+            flex: 3;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .info-section {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .chat-messages {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+        }
+        
+        .user-message {
+            justify-content: flex-end;
+        }
+        
+        .bot-message {
+            justify-content: flex-start;
+        }
+        
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+        }
+        
+        .user-message .message-bubble {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .bot-message .message-bubble {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #messageInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        #messageInput:focus {
+            border-color: #667eea;
+        }
+        
+        #sendButton {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .welcome-message {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-size: 14px;
+        }
+        
+        .info-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .endpoint-list {
+            list-style: none;
+        }
+        
+        .endpoint-list li {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .endpoint-list strong {
+            color: #667eea;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background: #4CAF50;
+        }
+        
+        .api-test {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: block;
+            width: 100%;
+            text-align: center;
+            text-decoration: none;
+        }
+        
+        .api-test:hover {
+            background: #764ba2;
+        }
+
+        /* NLP 工具模块样式 */
+        .nlp-section {
+            margin-top: 20px;
+        }
+
+        .nlp-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        .nlp-card h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nlp-textarea {
+            width: 100%;
+            min-height: 60px;
+            resize: vertical;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            margin-bottom: 8px;
+            outline: none;
+        }
+
+        .nlp-textarea:focus {
+            border-color: #667eea;
+        }
+
+        .nlp-button {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 16px;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 6px;
+        }
+
+        .nlp-result {
+            font-size: 13px;
+            color: #333;
+            background: #fff;
+            border-radius: 6px;
+            padding: 6px 8px;
+            border: 1px dashed #ddd;
+            min-height: 22px;
+            white-space: pre-wrap;
+        }
+
+        .nlp-tip {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="chat-section">
+            <div class="chat-header">
+                <h1>🤖 豆包智能聊天助手</h1>
+                <p>基于豆包大模型 | 支持自然对话 | 实时响应</p>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message">
+                    欢迎使用豆包智能助手！我是基于豆包大模型的AI助手，可以回答各种问题、进行对话交流。请在下方的输入框中输入您的消息。
+                </div>
+            </div>
+            
+            <div class="chat-input">
+                <div class="input-group">
+                    <input type="text" id="messageInput" placeholder="输入您的问题或消息..." autocomplete="off">
+                    <button id="sendButton">发送</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <h2>📡 服务信息</h2>
+            <div style="margin-bottom: 20px;">
+                <span class="status-indicator"></span>
+                <strong>服务状态: 运行中</strong>
+            </div>
+            
+            <h3>🔗 API端点</h3>
+            <ul class="endpoint-list">
+                <li>
+                    <strong>主页:</strong><br>
+                    <code>/</code> - 聊天界面
+                </li>
+                <li>
+                    <strong>聊天接口:</strong><br>
+                    <code>/message</code> (POST) - 发送和接收消息
+                </li>
+                <li>
+                    <strong>测试接口:</strong><br>
+                    <code>/test</code> (GET) - API功能测试
+                    <a href="/test" class="api-test" target="_blank">测试API</a>
+                </li>
+                <li>
+                    <strong>健康检查:</strong><br>
+                    <code>/health</code> (GET) - 服务状态检查
+                    <a href="/health" class="api-test" target="_blank">检查状态</a>
+                </li>
+            </ul>
+            
+            <h3>📊 使用说明</h3>
+            <p style="color: #666; font-size: 14px; line-height: 1.5;">
+                1. 在左侧输入框输入消息并发送<br>
+                2. 系统会调用豆包API获取回复<br>
+                3. 支持连续对话<br>
+                4. 点击右侧的测试链接检查服务状态<br>
+                5. 使用下方 NLP 工具进行文本分类、情感分析和机器翻译
+            </p>
+
+            <div class="nlp-section">
+                <div class="nlp-card">
+                    <h3>📰 文本分类（新闻十分类）</h3>
+                    <p class="nlp-tip">输入一段中文新闻文本，模型会判断所属类别（体育、财经、科技等）。</p>
+                    <textarea id="clsInput" class="nlp-textarea" placeholder="请输入要分类的新闻文本..."></textarea>
+                    <button class="nlp-button" onclick="handleClassify()">执行分类</button>
+                    <div id="clsResult" class="nlp-result">结果将在这里显示</div>
+                </div>
+
+                <div class="nlp-card">
+                    <h3>💓 情感分析（正向 / 负向）</h3>
+                    <p class="nlp-tip">输入一条评价或句子，模型会判断整体情感倾向。</p>
+                    <textarea id="sentInput" class="nlp-textarea" placeholder="请输入要分析情感的文本..."></textarea>
+                    <button class="nlp-button" onclick="handleSentiment()">分析情感</button>
+                    <div id="sentResult" class="nlp-result">结果将在这里显示</div>
+                </div>
+
+                <div class="nlp-card">
+                    <h3>🌐 机器翻译（中 ➜ 英）</h3>
+                    <p class="nlp-tip">输入一段中文句子，模型会翻译成英文。</p>
+                    <textarea id="transInput" class="nlp-textarea" placeholder="请输入要翻译的中文句子..."></textarea>
+                    <button class="nlp-button" onclick="handleTranslate()">开始翻译</button>
+                    <div id="transResult" class="nlp-result">结果将在这里显示</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM元素
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+
+        // NLP 工具 DOM 元素
+        const clsInput = document.getElementById('clsInput');
+        const clsResult = document.getElementById('clsResult');
+        const sentInput = document.getElementById('sentInput');
+        const sentResult = document.getElementById('sentResult');
+        const transInput = document.getElementById('transInput');
+        const transResult = document.getElementById('transResult');
+        
+        // 添加消息到聊天窗口
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            bubbleDiv.textContent = content;
+            
+            messageDiv.appendChild(bubbleDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            // 滚动到底部
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // 发送消息到后端
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // 清空输入框
+            messageInput.value = '';
+            
+            // 显示用户消息
+            addMessage(message, true);
+            
+            try {
+                // 发送请求到后端
+                const formData = new FormData();
+                formData.append('msg', message);
+                
+                const response = await fetch('/message', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                // 显示机器人回复
+                if (data.text) {
+                    addMessage(data.text, false);
+                } else {
+                    addMessage('抱歉，我暂时无法回复您。', false);
+                }
+                
+            } catch (error) {
+                console.error('发送消息出错:', error);
+                addMessage('网络连接出错，请稍后重试。', false);
+            }
+        }
+        
+        // 发送按钮点击事件
+        sendButton.addEventListener('click', sendMessage);
+        
+        // 回车键发送消息
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // 输入框自动聚焦
+        messageInput.focus();
+        
+        // 页面加载时显示欢迎消息
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                addMessage('你好！我是豆包AI助手，很高兴为您服务。有什么问题我都可以帮您解答！', false);
+            }, 500);
+        });
+
+        // ---------------- NLP 工具：调用后端接口 ---------------- //
+        async function handleClassify() {
+            const text = clsInput.value.trim();
+            if (!text) {
+                clsResult.textContent = '请输入要分类的文本。';
+                return;
+            }
+            clsResult.textContent = '正在分类中，请稍候...';
+            try {
+                const resp = await fetch('/nlp/classify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
+                });
+                const data = await resp.json();
+                if (data.status === 'success') {
+                    clsResult.textContent = `预测类别：${data.category}`;
+                } else {
+                    clsResult.textContent = `分类失败：${data.message || '未知错误'}`;
+                }
+            } catch (e) {
+                console.error(e);
+                clsResult.textContent = '请求出错，请稍后重试。';
+            }
+        }
+
+        async function handleSentiment() {
+            const text = sentInput.value.trim();
+            if (!text) {
+                sentResult.textContent = '请输入要分析的文本。';
+                return;
+            }
+            sentResult.textContent = '正在分析情感，请稍候...';
+            try {
+                const resp = await fetch('/nlp/sentiment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
+                });
+                const data = await resp.json();
+                if (data.status === 'success') {
+                    const score = (data.score * 100).toFixed(1);
+                    sentResult.textContent = `情感倾向：${data.label}（置信度 ${score}%）`;
+                } else {
+                    sentResult.textContent = `分析失败：${data.message || '未知错误'}`;
+                }
+            } catch (e) {
+                console.error(e);
+                sentResult.textContent = '请求出错，请稍后重试。';
+            }
+        }
+
+        async function handleTranslate() {
+            const text = transInput.value.trim();
+            if (!text) {
+                transResult.textContent = '请输入要翻译的中文句子。';
+                return;
+            }
+            transResult.textContent = '正在翻译，请稍候...';
+            try {
+                const resp = await fetch('/nlp/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
+                });
+                const data = await resp.json();
+                if (data.status === 'success') {
+                    transResult.textContent = data.translation || '（空结果）';
+                } else {
+                    transResult.textContent = `翻译失败：${data.message || '未知错误'}`;
+                }
+            } catch (e) {
+                console.error(e);
+                transResult.textContent = '请求出错，请稍后重试。';
+            }
+        }
+    </script>
+</body>
+</html>
